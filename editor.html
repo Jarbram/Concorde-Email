@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor de correos — VMC / Concorde</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --vault:#391383; --accent:#f1705d; --lav:#f5f3fe; --line:#e6e2f2; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Plus Jakarta Sans',Arial,sans-serif;background:#eceaf3;color:#2a2342;display:flex;height:100vh;overflow:hidden}
+  /* sidebar */
+  aside{width:240px;background:#fff;border-right:1px solid var(--line);padding:16px;overflow:auto;flex:none}
+  aside h2{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#8a82a6;margin:0 0 10px}
+  .pal{position:relative;display:block;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:11px 12px 11px 32px;margin-bottom:8px;cursor:grab;font:inherit;font-weight:600;color:var(--vault);transition:transform .1s,box-shadow .1s,border-color .1s}
+  .pal::before{content:"⠿";position:absolute;left:11px;top:11px;color:#c3bbdd;font-size:14px;line-height:1.3}
+  .pal:hover{background:var(--lav);border-color:#cfc6ee;transform:translateY(-1px);box-shadow:0 3px 10px rgba(57,19,131,.08)}
+  .pal:active{cursor:grabbing}
+  .pal small{display:block;font-weight:400;color:#8a82a6;margin-top:2px;font-size:11px}
+  /* main */
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  .bar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#fff;border-bottom:1px solid var(--line)}
+  .bar b{color:var(--vault)}
+  .bar .sp{flex:1}
+  .btn{border:none;border-radius:9999px;padding:10px 22px;font:inherit;font-weight:700;cursor:pointer}
+  .btn-primary{background:var(--vault);color:#fff}
+  .btn-ghost{background:#fff;color:var(--vault);border:1px solid var(--line)}
+  .scroll{flex:1;overflow:auto;padding:28px 16px;display:flex;justify-content:center}
+  .canvas{width:600px}
+  .locked{position:relative}
+  .locked::after{content:"🔒 fijo";position:absolute;top:6px;right:6px;font-size:10px;background:rgba(0,0,0,.5);color:#fff;padding:2px 6px;border-radius:6px;opacity:0;transition:.15s}
+  .locked:hover::after{opacity:1}
+  .block{position:relative;outline:1px dashed transparent;transition:outline .12s}
+  .block:hover{outline:1px dashed #b9aef0}
+  .block.dragging{opacity:.35}
+  #dropline{height:3px;background:var(--accent);border-radius:3px;margin:8px 0;box-shadow:0 0 0 3px rgba(241,112,93,.18)}
+  .tools{position:absolute;top:4px;right:4px;display:flex;gap:4px;opacity:0;transition:.12s;z-index:5}
+  .block:hover .tools{opacity:1}
+  .tools button{border:none;width:26px;height:26px;border-radius:7px;cursor:pointer;background:var(--vault);color:#fff;font-size:13px;line-height:1}
+  .tools .del{background:#d84a3a}
+  .ce:focus{outline:2px solid var(--accent);outline-offset:2px}
+  .imex{cursor:pointer}
+  .imex:hover{outline:2px dashed var(--accent)}
+  #empty{color:#8a82a6;text-align:center;padding:38px 30px;font-size:13px;border:2px dashed #cfc6ee;border-radius:14px;background:#faf9ff;margin:6px 0}
+  /* modal */
+  dialog{border:none;border-radius:14px;padding:18px;width:min(720px,92vw)}
+  dialog textarea{width:100%;height:340px;font-family:ui-monospace,Menlo,monospace;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:10px}
+  dialog::backdrop{background:rgba(20,10,40,.45)}
+</style>
+</head>
+<body>
+<aside>
+  <h2>Bloques</h2>
+  <button class="pal" data-add="titulo">Título<small>Encabezado destacado</small></button>
+  <button class="pal" data-add="parrafo">Párrafo<small>Texto de cuerpo</small></button>
+  <button class="pal" data-add="panel">Panel destacado<small>Badge + fecha / aviso</small></button>
+  <button class="pal" data-add="features">Fila de 3 features<small>Íconos + texto</small></button>
+  <button class="pal" data-add="sinfee">Panel "sin fee"<small>Badge blanco + imagen</small></button>
+  <h2 style="margin-top:22px">Cómo usar</h2>
+  <p style="font-size:12px;color:#8a82a6;line-height:1.5;margin:0">
+    <b>Arrastrá</b> un bloque al lienzo (o clic para agregar al final). La línea
+    coral marca dónde cae. Movelo después con el grip <b>⠿</b>.
+    Clic en cualquier texto para editarlo, en una imagen para cambiar su URL.
+    Header y footer son fijos. Terminá con <b>Copiar HTML</b>.
+  </p>
+</aside>
+
+<main>
+  <div class="bar">
+    <b>Editor de correos</b><span style="color:#8a82a6">· VMC Subastas / Concorde</span>
+    <span class="sp"></span>
+    <button class="btn btn-ghost" id="preview">Vista previa</button>
+    <button class="btn btn-primary" id="copy">Copiar HTML</button>
+  </div>
+  <div class="scroll">
+    <div class="canvas" id="canvas">
+      <div class="locked" id="header"></div>
+      <div id="blocks"><div id="empty">Agregá bloques desde la izquierda 👈</div></div>
+      <div class="locked" id="footer"></div>
+    </div>
+  </div>
+</main>
+
+<dialog id="dlg">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <b style="color:var(--vault)">HTML del correo</b><span class="sp" style="flex:1"></span>
+    <button class="btn btn-primary" id="dlgcopy">Copiar</button>
+    <button class="btn btn-ghost" id="dlgclose">Cerrar</button>
+  </div>
+  <textarea id="out" readonly></textarea>
+</dialog>
+
+<script>
+/* ---------- Fixed shell (header + footer kept verbatim from the original email) ---------- */
+const SHELL_OPEN = `<center><table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin:0;padding:0;width:100%;background-color:#FAFAFA"><tbody><tr><td align="center" valign="top">`;
+const SHELL_CLOSE = `</td></tr></tbody></table></center>`;
+
+// Glass header: vault gradient + translucent panel. bgcolor=#391383 is the Outlook fallback
+// (gradient, border-radius, box-shadow and rgba degrade to a solid purple bar there).
+const HEADER = `<table border="0" width="600" cellspacing="0" cellpadding="0" align="center" bgcolor="#ffffff" style="padding:20px"><tbody>
+<tr><td align="center" valign="middle" bgcolor="#391383" style="background-color:#391383;background-image:linear-gradient(135deg,#8460e5 0%,#3b1782 52%,#22005c 100%);padding:30px 24px">
+<table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td align="center" valign="middle" style="border-radius:16px;border:1px solid rgba(255,255,255,0.22);background-color:rgba(255,255,255,0.10);box-shadow:inset 0 1px 0 rgba(255,255,255,0.30);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:22px 20px">
+<img src="https://cdn.vmcsubastas.com/services/mailing/images/vmcsubastas-mail-header.png" style="display:block;margin:0 auto;max-width:100%;height:auto" alt="VMC Subastas">
+</td></tr></tbody></table></td></tr>
+<tr><td height="20"></td></tr></tbody></table>`;
+
+const FOOTER = `<table border="0" width="600" cellspacing="0" cellpadding="0" align="center" bgcolor="#ffffff"><tbody>
+<tr><td width="300" height="223" align="center" valign="middle" bgcolor="#391383" style="background-color:#391383;background-image:linear-gradient(135deg,#8460e5 0%,#3b1782 52%,#22005c 100%);padding:16px">
+<table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td align="center" valign="middle" style="border-radius:16px;border:1px solid rgba(255,255,255,0.18);background-color:rgba(255,255,255,0.08);box-shadow:inset 0 1px 0 rgba(255,255,255,0.25);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:14px">
+<table border="0" width="100%" cellspacing="0" cellpadding="0" align="center"><tbody>
+<tr><td align="center" style="font-family:'Poppins',Arial,sans-serif;font-size:21px;font-weight:600;line-height:1.5;color:#FAFAFA">VMC Subastas</td></tr>
+<tr><td align="center" style="font-family:'Poppins',Arial,sans-serif;font-size:16px;line-height:1.5;color:#FAFAFA">¡Despierta al cazador de ofertas que hay en ti!</td></tr>
+<tr><td align="center"><img src="https://cdn.vmcsubastas.com/services/mailing/inhabilitacion-cuenta/con-todo-footer.png" width="220" height="81" alt="Con todo" style="border:0;display:block;margin:0 auto;max-width:100%;height:auto"></td></tr></tbody></table></td></tr></tbody></table></td>
+<td width="300" height="223" bgcolor="#00005E" style="background-color:#00005E;background-image:linear-gradient(135deg,#22005c 0%,#00005E 62%,#000042 100%);padding:16px">
+<table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td align="center" valign="middle" style="border-radius:16px;border:1px solid rgba(255,255,255,0.18);background-color:rgba(255,255,255,0.08);box-shadow:inset 0 1px 0 rgba(255,255,255,0.25);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:14px">
+<table border="0" width="100%" cellspacing="0" cellpadding="0" align="center"><tbody>
+<tr><td align="center"><img src="https://cdn.vmcsubastas.com/services/mailing/inhabilitacion-cuenta/subastin.png" width="65" height="60" alt="" border="0" style="display:block;margin:0 auto"></td></tr>
+<tr><td height="8"></td></tr>
+<tr><td align="center" style="font-family:'Poppins',Arial,sans-serif;font-size:21px;font-weight:600;line-height:1.3;color:#FAFAFA">¿Quieres saber más?</td></tr>
+<tr><td height="8"></td></tr>
+<tr><td align="center" style="font-family:'Poppins',Arial,sans-serif;font-size:13px;font-weight:300;line-height:1.5;color:#FAFAFA">¡Visita nuestro <b>Centro de Ayuda!</b></td></tr>
+<tr><td height="16"></td></tr>
+<tr><td align="center"><a href="https://ayuda.vmcsubastas.com/es/collections/3079940-centro-de-ayuda-comprador" target="_blank" style="text-decoration:none"><table border="0" width="144" cellspacing="0" cellpadding="0" align="center"><tbody><tr><td width="144" height="34" style="border-radius:9999px;font-family:'Poppins',Arial,sans-serif;font-size:13px;font-weight:600;color:#00005E" bgcolor="#FAFAFA" align="center" valign="middle"><b>¡Vamos!</b></td></tr></tbody></table></a></td></tr></tbody></table></td></tr></tbody></table></td></tr></tbody></table>
+<table border="0" cellpadding="0" cellspacing="0" width="600" align="center" bgcolor="#FFFFFF"><tbody>
+<tr><td height="26"></td></tr>
+<tr><td align="center"><a href="https://www.vmcsubastas.com/" target="_blank" style="font-size:24px;font-family:Arial,sans-serif;color:#A298B3;text-decoration:none"><b>www.vmcsubastas.com</b></a></td></tr>
+<tr><td height="14"></td></tr>
+<tr><td align="center" style="font-size:8px;font-family:Arial,sans-serif;line-height:13px;color:#0E016C;padding:0 24px">El presente correo se envía de acuerdo a la Ley N° 28493 que regula el Uso de Correo Comercial sin ser solicitado y su reglamento. Si deseas dejar de recibir estos correos, haz clic en: <a href="https://services.subastop.com/subscribers/unsubscribe" style="font-weight:bold;text-decoration:none;color:#0E016C" target="_blank">REMOVER SUSCRIPCIÓN</a></td></tr>
+<tr><td height="8"></td></tr>
+<tr><td align="center" style="font-size:8px;font-family:Arial,sans-serif;color:#0E016C">2025 VMC Subastas. Todos los derechos reservados.</td></tr>
+<tr><td height="20"></td></tr></tbody></table>`;
+
+/* ---------- Block templates (email-safe, Concorde tokens) ----------
+   .ce  = editable text  |  .imex = clickable image (change URL)        */
+const F = `'Plus Jakarta Sans',Arial,Helvetica,sans-serif`;
+const T = {
+  titulo: () => `<table border="0" width="600" cellspacing="0" cellpadding="0" align="center" bgcolor="#FFFFFF"><tbody>
+<tr><td align="center" style="padding:0 24px 12px;font-family:${F}"><table border="0" cellpadding="0" cellspacing="0" align="center"><tbody><tr><td bgcolor="#fdecea" style="border-radius:9999px;padding:5px 13px"><span class="ce" style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#f1705d;font-family:${F}">Actualización</span></td></tr></tbody></table></td></tr>
+<tr><td align="center" style="padding:0 24px;font-family:${F}"><span class="ce" style="font-size:24px;font-weight:800;line-height:1.25;color:#391383;letter-spacing:-0.02em">Información importante sobre tus adquisiciones</span></td></tr>
+<tr><td height="30"></td></tr></tbody></table>`,
+
+  parrafo: () => `<table border="0" width="600" cellspacing="0" cellpadding="0" align="center" bgcolor="#FFFFFF"><tbody>
+<tr><td align="left" style="padding:0 24px;font-family:'Buenos Aires',Arial,helvetica,Calibri;font-size:14px;line-height:22px;color:#0E016C"><span class="ce">Escribe aquí el texto de tu correo. Puedes editarlo libremente con un clic.</span></td></tr>
+<tr><td height="20"></td></tr></tbody></table>`,
+
+  panel: () => `<table border="0" width="600" cellspacing="0" cellpadding="0" align="center" bgcolor="#FFFFFF"><tbody><tr><td align="center" style="padding:0 24px 14px;font-family:${F}">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" align="center" bgcolor="#f5f3fe" style="max-width:500px;border-radius:14px;border:1px solid #e7e1f7;background-image:linear-gradient(135deg,#f6f3fe 0%,#efe9fb 100%)"><tbody><tr><td style="padding:16px 16px">
+<p class="ce" style="margin:0 0 12px;font-size:14px;font-weight:700;line-height:1.35;color:#391383;font-family:${F}">A partir del <strong style="color:#f1705d">1 de Julio</strong> del presente año</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr>
+<td width="48" valign="top"><table border="0" cellpadding="0" cellspacing="0" width="48" height="48" bgcolor="#391383" style="border-radius:50%;background-image:linear-gradient(135deg,#8460e5 0%,#3b1782 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,0.35)"><tbody><tr><td align="center" valign="middle" width="48" height="48"><img class="imex" src="https://cdn.vmcsubastas.com/services/boletin/assets/icon-calendar.png" width="30" height="30" alt="" border="0" style="display:block"></td></tr></tbody></table></td>
+<td width="14"></td>
+<td valign="top"><p class="ce" style="margin:0;font-size:14px;line-height:1.45;color:#5a4d75;font-family:${F}">Las compras realizadas con tarjeta de Crédito o Débito podrán incluir un <strong style="color:#f1705d">Fee por uso de pasarela</strong>, asociado al procesamiento de la transacción.</p></td>
+</tr></tbody></table></td></tr></tbody></table></td></tr>
+<tr><td height="20"></td></tr></tbody></table>`,
+
+  features: () => `<table border="0" width="600" cellspacing="0" cellpadding="0" align="center" bgcolor="#FFFFFF"><tbody><tr><td align="center" style="padding:4px 24px 14px;font-family:${F}">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" align="center"><tbody>
+<tr><td align="center" style="padding-bottom:14px"><span class="ce" style="font-size:14px;font-weight:800;line-height:1.3;color:#391383;font-family:${F}">¿Qué debes tener en cuenta?</span></td></tr>
+<tr><td><table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody>
+<tr>
+<td width="32%" align="center" style="padding:0 6px"><table border="0" cellpadding="0" cellspacing="0" width="58" height="58" align="center" bgcolor="#f5f3fe" style="border-radius:50%;border:1px solid #e7e1f7"><tbody><tr><td align="center" valign="middle" width="58" height="58"><img class="imex" src="https://cdn.vmcsubastas.com/services/boletin/assets/icon-search.png" width="34" height="34" alt="" border="0" style="display:block;margin:0 auto"></td></tr></tbody></table></td>
+<td width="2%"></td>
+<td width="32%" align="center" style="padding:0 6px"><table border="0" cellpadding="0" cellspacing="0" width="58" height="58" align="center" bgcolor="#f5f3fe" style="border-radius:50%;border:1px solid #e7e1f7"><tbody><tr><td align="center" valign="middle" width="58" height="58"><img class="imex" src="https://cdn.vmcsubastas.com/services/boletin/assets/icon-eye.png" width="34" height="34" alt="" border="0" style="display:block;margin:0 auto"></td></tr></tbody></table></td>
+<td width="2%"></td>
+<td width="32%" align="center" style="padding:0 6px"><table border="0" cellpadding="0" cellspacing="0" width="58" height="58" align="center" bgcolor="#f5f3fe" style="border-radius:50%;border:1px solid #e7e1f7"><tbody><tr><td align="center" valign="middle" width="58" height="58"><img class="imex" src="https://cdn.vmcsubastas.com/services/boletin/assets/icon-cards.png" width="34" height="34" alt="" border="0" style="display:block;margin:0 auto"></td></tr></tbody></table></td>
+</tr>
+<tr><td height="12" colspan="5"></td></tr>
+<tr>
+<td width="32%" align="center" valign="top" class="ce" style="padding:0 6px;font-size:12px;line-height:1.35;color:#5a4d75;font-family:${F}">El costo del fee equivale al <strong style="color:#391383">3.9%</strong> de tu adquisición</td>
+<td width="2%" align="center" valign="top"><table border="0" cellpadding="0" cellspacing="0" width="1" height="40" bgcolor="#d5cfe8"><tr><td></td></tr></table></td>
+<td width="32%" align="center" valign="top" class="ce" style="padding:0 6px;font-size:12px;line-height:1.35;color:#5a4d75;font-family:${F}">Se te mostrará de forma clara antes de pagar</td>
+<td width="2%" align="center" valign="top"><table border="0" cellpadding="0" cellspacing="0" width="1" height="40" bgcolor="#d5cfe8"><tr><td></td></tr></table></td>
+<td width="32%" align="center" valign="top" class="ce" style="padding:0 6px;font-size:12px;line-height:1.35;color:#5a4d75;font-family:${F}">Si tu tarjeta es en soles, el tipo de cambio lo define tu proveedor</td>
+</tr></tbody></table></td></tr></tbody></table></td></tr>
+<tr><td height="20"></td></tr></tbody></table>`,
+
+  sinfee: () => `<table border="0" width="600" cellspacing="0" cellpadding="0" align="center" bgcolor="#FFFFFF"><tbody><tr><td align="center" style="padding:0 24px 14px;font-family:${F}">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" align="center" bgcolor="#f5f3fe" style="max-width:500px;border-radius:14px;border:1px solid #e7e1f7;background-image:linear-gradient(135deg,#f6f3fe 0%,#efe9fb 100%)"><tbody><tr><td style="padding:16px 16px">
+<p class="ce" style="margin:0 0 10px;font-size:14px;font-weight:700;line-height:1.35;color:#391383;font-family:${F}">Opciones <strong style="color:#f1705d">SIN FEE</strong> por uso de pasarela</p>
+<table border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr>
+<td width="48" valign="middle"><table border="0" cellpadding="0" cellspacing="0" width="48" height="48" bgcolor="#FFFFFF" style="border-radius:50%;border:1px solid #e7e1f7;box-shadow:inset 0 1px 0 rgba(255,255,255,0.6)"><tbody><tr><td align="center" valign="middle" width="48" height="48"><img class="imex" src="https://cdn.vmcsubastas.com/services/boletin/assets/icon-bank-building.png" width="38" height="38" alt="" border="0" style="display:block"></td></tr></tbody></table></td>
+<td width="8"></td>
+<td valign="middle"><p class="ce" style="margin:0;font-size:14px;line-height:1.45;color:#5a4d75;font-family:${F}">Recarga tu saldo en dólares por ventanilla, agente o app del banco BCP usando tu CUU. Esta operación no tiene este Fee.</p></td>
+<td width="8"></td>
+<td width="85" valign="middle" align="right"><img class="imex" src="https://cdn.vmcsubastas.com/services/boletin/assets/phone-bcp.png" width="85" height="57" alt="App BCP" border="0" style="display:block"></td>
+</tr></tbody></table></td></tr></tbody></table></td></tr>
+<tr><td height="20"></td></tr></tbody></table>`,
+};
+
+/* ---------- Editor wiring ---------- */
+const blocks = document.getElementById('blocks');
+const empty = document.getElementById('empty');
+document.getElementById('header').innerHTML = HEADER;
+document.getElementById('footer').innerHTML = FOOTER;
+
+function refreshEmpty(){ empty.style.display = blocks.querySelector('.block') ? 'none' : 'block'; }
+
+const line = document.createElement('div'); line.id = 'dropline';
+let dragging = null, newType = null;
+const clearLine = () => { if (line.parentNode) line.remove(); };
+function placeLine(y){
+  let ref = null;
+  for (const k of blocks.querySelectorAll('.block')) {
+    const r = k.getBoundingClientRect();
+    if (y < r.top + r.height/2) { ref = k; break; }
+  }
+  blocks.insertBefore(line, ref);
+}
+
+function makeBlock(name){
+  const wrap = document.createElement('div');
+  wrap.className = 'block';
+  wrap.innerHTML = `<div class="tools"><button class="drag" title="Mover">⠿</button><button class="del" title="Eliminar">✕</button></div><div class="content">${T[name]()}</div>`;
+  wrap.querySelectorAll('.ce').forEach(e => e.setAttribute('contenteditable','true'));
+  wrap.querySelectorAll('.imex').forEach(img => img.addEventListener('click', () => {
+    const url = prompt('URL de la imagen:', img.src);
+    if (url) img.src = url;
+  }));
+  wrap.querySelector('.del').addEventListener('click', () => { wrap.remove(); refreshEmpty(); });
+  // drag only from the grip, so text stays selectable
+  wrap.querySelector('.drag').addEventListener('mousedown', () => wrap.draggable = true);
+  wrap.addEventListener('dragstart', e => { dragging = wrap; wrap.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+  wrap.addEventListener('dragend', () => { wrap.draggable = false; wrap.classList.remove('dragging'); dragging = null; clearLine(); });
+  return wrap;
+}
+
+function addBlock(name, before){
+  const wrap = makeBlock(name);
+  blocks.insertBefore(wrap, before || null);
+  refreshEmpty();
+  return wrap;
+}
+
+/* palette: click = agrega al final, arrastrar = soltar donde quieras */
+document.querySelectorAll('[data-add]').forEach(b => {
+  b.draggable = true;
+  b.addEventListener('click', () => addBlock(b.dataset.add));
+  b.addEventListener('dragstart', e => { newType = b.dataset.add; e.dataTransfer.effectAllowed = 'copy'; });
+  b.addEventListener('dragend', () => { newType = null; clearLine(); });
+});
+
+/* canvas: línea indicadora + insertar al soltar (bloque nuevo o reordenado) */
+blocks.addEventListener('dragover', e => {
+  if (!dragging && !newType) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = newType ? 'copy' : 'move';
+  placeLine(e.clientY);
+});
+blocks.addEventListener('drop', e => {
+  if (!dragging && !newType) return;
+  e.preventDefault();
+  const before = (line.parentNode === blocks) ? line.nextElementSibling : null;
+  clearLine();
+  if (newType) addBlock(newType, before);
+  else if (dragging && before !== dragging) blocks.insertBefore(dragging, before);
+  refreshEmpty();
+});
+blocks.addEventListener('dragleave', e => { if (!blocks.contains(e.relatedTarget)) clearLine(); });
+
+/* export */
+function buildEmail(){
+  const body = [...blocks.querySelectorAll('.block .content')].map(c => {
+    const clone = c.cloneNode(true);
+    clone.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
+    clone.querySelectorAll('.ce,.imex').forEach(e => e.classList.remove('ce','imex'));
+    return clone.innerHTML;
+  }).join('\n');
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta property="og:title" content="VMC Subastas"><title>VMC Subastas</title></head><body style="margin:0;background-color:#FAFAFA">\n${SHELL_OPEN}\n${HEADER}\n${body}\n${FOOTER}\n${SHELL_CLOSE}\n</body></html>`;
+}
+
+const dlg = document.getElementById('dlg');
+const out = document.getElementById('out');
+document.getElementById('copy').addEventListener('click', async () => {
+  const html = buildEmail();
+  out.value = html;
+  try { await navigator.clipboard.writeText(html); } catch(_) {}
+  dlg.showModal();
+});
+document.getElementById('preview').addEventListener('click', () => {
+  const w = window.open('', '_blank');
+  w.document.write(buildEmail()); w.document.close();
+});
+document.getElementById('dlgcopy').addEventListener('click', async () => {
+  out.select(); try { await navigator.clipboard.writeText(out.value); } catch(_) { document.execCommand('copy'); }
+});
+document.getElementById('dlgclose').addEventListener('click', () => dlg.close());
+</script>
+</body>
+</html>
