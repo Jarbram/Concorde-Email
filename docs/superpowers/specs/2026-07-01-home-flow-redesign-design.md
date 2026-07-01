@@ -47,9 +47,20 @@ herramienta interna de bajo tráfico).
 
 ### C. Badge de variante en cada card
 
-Cada card del grid gana un tag chico "Categoría · Etapa", coloreado con el acento real de
-esa variante: morado (`#3b1782`) para `En vivo`, teal (mismo gradiente que ya usa el CTA
-`variant: negotiable`, `G_NEGOTIABLE` en `email-templates.ts`) para `Negociable`.
+Cada card del grid gana un tag chico "Categoría · Etapa", coloreado con el gradiente real
+de esa variante — reusando los tokens que ya existen en `lib/email-templates.ts` (y que a
+su vez vienen de `concorde/components/OfferCard.tsx`, el design system de Subastop):
+
+- `En vivo` → `G_PRIMARY` (`linear-gradient(135deg,#ed8936 0%,#8460e5 100%)`, naranja→morado),
+  el mismo que usa el botón CTA por defecto y equivalente a la barra naranja de
+  `OfferCard` variant `live`.
+- `Negociable` → `G_NEGOTIABLE` (`linear-gradient(125deg,#00aeb1 0%,#00aeb1 40%,#8460e5 100%)`,
+  teal→morado), el mismo que usa el CTA `variant: negotiable` y equivalente a la barra teal
+  de `OfferCard` variant `negotiable`.
+
+El diagrama de flujo (sección B) usa el mismo criterio de color por categoría para los chips
+y sus líneas, así la card, el badge y el diagrama quedan visualmente consistentes entre sí
+y con el resto del design system.
 
 ### D. Cambios de datos (`lib/emails.ts`)
 
