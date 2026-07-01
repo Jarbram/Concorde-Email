@@ -11,6 +11,7 @@ export interface EmailTemplate {
   desc: string;      // descripción corta para la card
   category?: string; // agrupa la card en el catálogo (ej. "En vivo")
   stage?: string;     // paso dentro del flujo de la categoría (ej. "Negociación"), pinta el stepper
+  leadsTo?: string[]; // ids de correos a los que puede derivar (dibuja las líneas del diagrama de flujo)
   sections: Section[];
 }
 
@@ -21,6 +22,24 @@ const ICON = {
   cards: 'https://cdn.vmcsubastas.com/services/boletin/assets/icon-cards.png',
   bank: 'https://cdn.vmcsubastas.com/services/boletin/assets/icon-bank-building.png',
   phone: 'https://cdn.vmcsubastas.com/services/boletin/assets/phone-bcp.png',
+};
+
+// orden real del flujo de negocio por categoría — no depende del orden de inserción en EMAILS
+export const STAGE_ORDER: Record<string, string[]> = {
+  'En vivo': ['Inicio', 'Resultado', 'Negociación', 'Habilitación', 'Cierre'],
+  'Negociable': ['Inicio', 'Negociación', 'Alertas', 'Resultado'],
+};
+
+// mismos gradientes que ya usan los CTA de email-templates.ts (G_PRIMARY / G_NEGOTIABLE),
+// que a su vez vienen de concorde/components/OfferCard.tsx (barras live/negotiable)
+export const CATEGORY_GRADIENT: Record<string, string> = {
+  'En vivo': 'linear-gradient(135deg,#ed8936 0%,#8460e5 100%)',
+  'Negociable': 'linear-gradient(125deg,#00aeb1 0%,#00aeb1 40%,#8460e5 100%)',
+};
+
+export const CATEGORY_SOLID: Record<string, string> = {
+  'En vivo': '#ed8936',
+  'Negociable': '#00aeb1',
 };
 
 // demo del design system Concorde (mismo asset que usan OfferCard/Detalle/Sala en concorde/bloques);
@@ -74,6 +93,7 @@ export const EMAILS: EmailTemplate[] = [
     desc: 'Confirms participation: details (date, seller, consignment) + live-room reminder.',
     category: 'En vivo',
     stage: 'Inicio',
+    leadsTo: ['mejor-postor', 'ganador-directo'],
     sections: [
       // {{...}} = merge tags (se reemplazan en tu plataforma); **...** = acento
       S('title', { eyebrow: '', text: '¡Listo para participar en la oferta {{Toyota Hilux 2018}}!' }),
@@ -102,6 +122,7 @@ export const EMAILS: EmailTemplate[] = [
     desc: 'Notifies 2nd/3rd-place bidders of a purchase opportunity and explains eligibility conditions.',
     category: 'En vivo',
     stage: 'Resultado',
+    leadsTo: ['habilitado-comprar'],
     sections: [
       S('title', { eyebrow: '', text: '¡Tienes oportunidad de compra en la oferta {{Toyota Hilux 2018}}!' }),
       SP('24'),
@@ -128,6 +149,7 @@ export const EMAILS: EmailTemplate[] = [
     desc: 'Notifies the direct winner, prompts to start the purchase, and states the sanctions.',
     category: 'En vivo',
     stage: 'Resultado',
+    leadsTo: ['habilitado-comprar'],
     sections: [
       S('title', { eyebrow: '', text: '¡Eres el Ganador Directo en la oferta {{Toyota Hilux 2018}}!' }),
       SP('24'),
@@ -154,6 +176,7 @@ export const EMAILS: EmailTemplate[] = [
     desc: 'Notifies the current best bidder and explains what being top bidder means.',
     category: 'En vivo',
     stage: 'Resultado',
+    leadsTo: ['contrapropuesta', 'opcion-compra', 'habilitado-comprar', 'oferta-terminada'],
     sections: [
       S('title', { eyebrow: '', text: '¡Eres el Mejor Postor en la oferta {{Toyota Hilux 2018}}!' }),
       SP('24'),
@@ -176,6 +199,7 @@ export const EMAILS: EmailTemplate[] = [
     desc: 'Notifies the buyer the seller granted a purchase option and prompts them to accept it.',
     category: 'En vivo',
     stage: 'Resultado',
+    leadsTo: ['habilitado-comprar'],
     sections: [
       S('title', { eyebrow: '', text: '¡Tienes opción de compra en la oferta {{Toyota Hilux 2018}}!' }),
       SP('24'),
@@ -204,6 +228,7 @@ export const EMAILS: EmailTemplate[] = [
     desc: 'Notifies the top bidder of a seller counteroffer and explains the counteroffer mechanic.',
     category: 'En vivo',
     stage: 'Negociación',
+    leadsTo: ['propuesta-rechazada', 'habilitado-comprar'],
     sections: [
       S('title', { eyebrow: '', text: '¡Recibiste una contrapropuesta en la oferta {{Toyota Hilux 2018}}!' }),
       SP('24'),
@@ -230,6 +255,7 @@ export const EMAILS: EmailTemplate[] = [
     desc: 'Confirms the bidder rejected the seller counteroffer and their consignment was released.',
     category: 'En vivo',
     stage: 'Negociación',
+    leadsTo: ['oferta-terminada-postor'],
     sections: [
       S('title', { eyebrow: '', text: '¡Rechazaste la propuesta en la oferta {{Toyota Yaris 2018}}!' }),
       SP('24'),
@@ -302,6 +328,7 @@ export const EMAILS: EmailTemplate[] = [
     desc: 'Confirms the bidder started a negotiation with the seller and shows the proposal + guarantee.',
     category: 'Negociable',
     stage: 'Inicio',
+    leadsTo: ['contrapropuesta-negociable', 'ganaste-oferta-negociable', 'negociacion-finalizada'],
     sections: [
       S('title', { eyebrow: '', text: '¡Negociación iniciada con éxito!' }),
       SP('24'),
@@ -327,6 +354,7 @@ export const EMAILS: EmailTemplate[] = [
     desc: 'Notifies the seller a buyer started a new negotiation with a proposal, the expectation gap, and prompts a response.',
     category: 'Negociable',
     stage: 'Inicio',
+    leadsTo: ['vendedor-acepta-propuesta', 'negociacion-finalizada'],
     sections: [
       S('title', { eyebrow: '', text: '¡Nueva negociación iniciada!' }),
       SP('24'),
@@ -359,6 +387,7 @@ export const EMAILS: EmailTemplate[] = [
     desc: 'Notifies the bidder of a seller counteroffer on a negotiable listing, with round comparison and deadline.',
     category: 'Negociable',
     stage: 'Negociación',
+    leadsTo: ['contrapropuesta-hecha', 'contrapropuesta-aceptada-comprador', 'contrapropuesta-rechazada-comprador'],
     sections: [
       S('title', { eyebrow: '', text: '¡Recibiste una contrapropuesta en {{Toyota Hilux 2018}}!' }),
       SP('24'),
@@ -392,6 +421,7 @@ export const EMAILS: EmailTemplate[] = [
     desc: 'Confirms the buyer made a counteroffer and is waiting for the seller response within the round deadline.',
     category: 'Negociable',
     stage: 'Negociación',
+    leadsTo: ['contrapropuesta-negociable', 'contrapropuesta-aceptada-comprador'],
     sections: [
       S('title', { eyebrow: '', text: '¡Hiciste una contrapropuesta en {{Toyota Hilux 2018}}!' }),
       SP('24'),
@@ -421,6 +451,7 @@ export const EMAILS: EmailTemplate[] = [
     desc: 'Final reminder that a negotiable proposal is about to expire, with the deadline penalty if no response is sent.',
     category: 'Negociable',
     stage: 'Alertas',
+    leadsTo: ['negociacion-expirada'],
     sections: [
       S('title', { eyebrow: '', text: '¡Última notificación! ¡La propuesta expirará!' }),
       SP('24'),
@@ -447,6 +478,7 @@ export const EMAILS: EmailTemplate[] = [
     desc: 'Reminds the recipient a negotiable proposal is waiting and will expire, prompting a response.',
     category: 'Negociable',
     stage: 'Alertas',
+    leadsTo: ['propuesta-expirara-ultima-notificacion'],
     sections: [
       S('title', { eyebrow: '', text: '¡Propuesta expirará {{hh:mm}}!' }),
       SP('24'),
@@ -471,6 +503,7 @@ export const EMAILS: EmailTemplate[] = [
     desc: 'Urgent escalation that a negotiable proposal is about to expire, prompting an immediate response.',
     category: 'Negociable',
     stage: 'Alertas',
+    leadsTo: ['negociacion-expirada'],
     sections: [
       S('title', { eyebrow: '', text: '¡Muy importante! ¡Propuesta por expirar {{hh:mm}}!' }),
       SP('24'),
