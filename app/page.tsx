@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { EMAILS, type EmailTemplate } from '@/lib/emails';
 import { generateEmail } from '@/lib/email-templates';
@@ -17,35 +17,104 @@ function copy(text: string, done: () => void) {
   });
 }
 
+function groupBy<T>(items: T[], key: (item: T) => string): [string, T[]][] {
+  const groups = items.reduce<Record<string, T[]>>((acc, item) => {
+    const k = key(item);
+    (acc[k] ??= []).push(item);
+    return acc;
+  }, {});
+  return Object.entries(groups);
+}
+
+function Sidebar({
+  categoryGroups, active, onSelect, query, onQuery,
+}: {
+  categoryGroups: [string, EmailTemplate[]][];
+  active: { category: string | null; stage: string | null };
+  onSelect: (category: string | null, stage: string | null) => void;
+  query: string;
+  onQuery: (q: string) => void;
+}) {
+  const pillStyle = (isActive: boolean) => ({
+    display: 'block', width: '100%', textAlign: 'left' as const, padding: '7px 10px', borderRadius: '8px',
+    border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '13px',
+    background: isActive ? C.purple : 'transparent', color: isActive ? '#fff' : C.body, fontWeight: isActive ? 700 : 600,
+  });
+
+  return (
+    <div style={{ position: 'sticky', top: '24px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <input
+        value={query}
+        onChange={(e) => onQuery(e.target.value)}
+        placeholder="Buscar correo…"
+        style={{
+          padding: '10px 14px', borderRadius: '10px', border: `1px solid ${C.divider}`, fontFamily: 'inherit',
+          fontSize: '13px', color: C.ink, marginBottom: '12px', outline: 'none',
+        }}
+      />
+      <button onClick={() => onSelect(null, null)} style={pillStyle(!active.category)}>
+        Todos <span style={{ opacity: 0.7 }}>· {EMAILS.length}</span>
+      </button>
+      {categoryGroups.map(([category, emails]) => {
+        const stages = groupBy(emails, (e) => e.stage ?? '').filter(([stage]) => stage);
+        const catActive = active.category === category;
+        return (
+          <div key={category} style={{ marginTop: '10px' }}>
+            <button onClick={() => onSelect(category, null)} style={{ ...pillStyle(catActive && !active.stage), fontWeight: 700, color: catActive && !active.stage ? '#fff' : C.ink }}>
+              {category} <span style={{ opacity: 0.6, fontWeight: 600 }}>· {emails.length}</span>
+            </button>
+            {stages.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px', paddingLeft: '12px', borderLeft: `2px solid ${C.divider}` }}>
+                {stages.map(([stage, stageEmails]) => (
+                  <button key={stage} onClick={() => onSelect(category, stage)} style={pillStyle(catActive && active.stage === stage)}>
+                    {stage} <span style={{ opacity: 0.6 }}>· {stageEmails.length}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function EmailGrid({ emails }: { emails: EmailTemplate[] }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
+      {emails.map((email) => <EmailCard key={email.id} email={email} />)}
+    </div>
+  );
+}
+
 function EmailCard({ email }: { email: EmailTemplate }) {
   const [copied, setCopied] = useState(false);
   const html = generateEmail(email.sections, email.subject);
   return (
     <div style={{ background: C.white, borderRadius: '16px', border: `1px solid ${C.divider}`, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      <Link href={`/correo/${email.id}`} style={{ display: 'block', position: 'relative', height: '300px', overflow: 'hidden', background: '#f6f5fa', borderBottom: `1px solid ${C.lavender}` }}>
+      <Link href={`/correo/${email.id}`} style={{ display: 'block', position: 'relative', height: '260px', overflow: 'hidden', background: '#f6f5fa', borderBottom: `1px solid ${C.lavender}` }}>
         <iframe
           srcDoc={html}
           title={email.name}
           scrolling="no"
           tabIndex={-1}
-          style={{ border: 'none', width: '600px', transform: 'scale(0.62)', transformOrigin: 'top center', height: '900px', display: 'block', margin: '0 auto', pointerEvents: 'none', background: '#fff' }}
+          style={{ border: 'none', width: '600px', transform: 'scale(0.54)', transformOrigin: 'top center', height: '900px', display: 'block', margin: '0 auto', pointerEvents: 'none', background: '#fff' }}
         />
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '80px', background: 'linear-gradient(180deg, rgba(246,245,250,0) 0%, #f6f5fa 90%)' }} />
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '70px', background: 'linear-gradient(180deg, rgba(246,245,250,0) 0%, #f6f5fa 90%)' }} />
       </Link>
-      <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
+      <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
         <div>
-          <h3 style={{ fontSize: '16px', fontWeight: 700, color: C.ink, margin: 0 }}>{email.name}</h3>
+          <h3 style={{ fontSize: '15px', fontWeight: 700, color: C.ink, margin: 0 }}>{email.name}</h3>
           <p style={{ fontSize: '12px', color: C.body, margin: '4px 0 0', lineHeight: 1.45 }}>{email.desc}</p>
-          <p style={{ fontSize: '11px', color: '#a89fc0', margin: '6px 0 0' }}>Subject: {email.subject}</p>
         </div>
         <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
           <button
             onClick={() => copy(html, () => { setCopied(true); setTimeout(() => setCopied(false), 1800); })}
-            style={{ flex: 1, padding: '9px 16px', borderRadius: '10px', border: 'none', cursor: 'pointer', background: copied ? '#00aeb1' : C.ink, color: '#fff', fontFamily: 'inherit', fontSize: '13px', fontWeight: 700, transition: 'background .2s' }}
+            style={{ flex: 1, padding: '9px 14px', borderRadius: '10px', border: 'none', cursor: 'pointer', background: copied ? '#00aeb1' : C.ink, color: '#fff', fontFamily: 'inherit', fontSize: '13px', fontWeight: 700, transition: 'background .2s' }}
           >
             {copied ? '✓ Copied' : 'Copy HTML'}
           </button>
-          <Link href={`/correo/${email.id}`} style={{ padding: '9px 18px', borderRadius: '10px', border: `1px solid ${C.divider}`, background: '#fff', color: C.ink, fontFamily: 'inherit', fontSize: '13px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+          <Link href={`/correo/${email.id}`} style={{ padding: '9px 16px', borderRadius: '10px', border: `1px solid ${C.divider}`, background: '#fff', color: C.ink, fontFamily: 'inherit', fontSize: '13px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
             Open
           </Link>
         </div>
@@ -55,13 +124,35 @@ function EmailCard({ email }: { email: EmailTemplate }) {
 }
 
 export default function HomePage() {
+  const categoryGroups = useMemo(() => groupBy(EMAILS, (e) => e.category ?? 'General'), []);
+  const [query, setQuery] = useState('');
+  const [active, setActive] = useState<{ category: string | null; stage: string | null }>({ category: null, stage: null });
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return EMAILS.filter((e) => {
+      const matchesQuery = !q || e.name.toLowerCase().includes(q) || e.subject.toLowerCase().includes(q) || e.desc.toLowerCase().includes(q);
+      const matchesCategory = !active.category || (e.category ?? 'General') === active.category;
+      const matchesStage = !active.stage || e.stage === active.stage;
+      return matchesQuery && matchesCategory && matchesStage;
+    });
+  }, [query, active]);
+
+  const filteredGroups = useMemo(() => {
+    if (query.trim()) return null;
+    const cats = active.category ? categoryGroups.filter(([c]) => c === active.category) : categoryGroups;
+    return cats.map(([category]) => {
+      const emails = filtered.filter((e) => (e.category ?? 'General') === category);
+      const stages = groupBy(emails, (e) => e.stage ?? '').filter(([stage]) => stage);
+      return { category, emails, stages };
+    }).filter((g) => g.emails.length > 0);
+  }, [filtered, categoryGroups, active, query]);
+
   return (
     <div style={{ minHeight: '100vh', background: C.bg, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-      {/* Hero claro estilo design system */}
-      <header style={{ padding: '96px 24px 72px', textAlign: 'center' }}>
-        <h1 style={{ fontSize: 'clamp(44px, 8vw, 88px)', fontWeight: 800, color: C.ink, letterSpacing: '-0.04em', lineHeight: 1.02, margin: '0 0 28px' }}>
-          Ready-made emails<br />
-          for{' '}
+      <header style={{ padding: '56px 24px 40px', textAlign: 'center', borderBottom: `1px solid ${C.divider}` }}>
+        <h1 style={{ fontSize: 'clamp(32px, 5vw, 48px)', fontWeight: 800, color: C.ink, letterSpacing: '-0.03em', lineHeight: 1.05, margin: '0 0 12px' }}>
+          Ready-made emails for{' '}
           <span style={{
             background: 'linear-gradient(90deg, #ed8936 0%, #f1705d 42%, #8460e5 100%)',
             WebkitBackgroundClip: 'text', backgroundClip: 'text',
@@ -70,29 +161,48 @@ export default function HomePage() {
             Subastop
           </span>
         </h1>
-        <p style={{ fontSize: '19px', color: C.slate, maxWidth: '560px', margin: '0 auto 40px', lineHeight: 1.5, fontWeight: 500 }}>
+        <p style={{ fontSize: '16px', color: C.slate, maxWidth: '520px', margin: '0 auto', lineHeight: 1.5, fontWeight: 500 }}>
           Pre-built templates with the Concorde style. Open, copy the HTML and send — zero friction.
         </p>
-
-        <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a href="#catalogo" style={{ padding: '14px 30px', borderRadius: '12px', background: C.ink, color: '#fff', fontSize: '15px', fontWeight: 700, textDecoration: 'none' }}>
-            View emails
-          </a>
-          <a href="https://concorde-v2-theta.vercel.app" target="_blank" rel="noreferrer" style={{ padding: '14px 30px', borderRadius: '12px', background: '#fff', color: C.ink, border: `1px solid ${C.divider}`, fontSize: '15px', fontWeight: 700, textDecoration: 'none' }}>
-            Design system
-          </a>
-        </div>
       </header>
 
-      {/* Catálogo */}
-      <main id="catalogo" style={{ maxWidth: '1100px', margin: '0 auto', padding: '24px 24px 80px', scrollMarginTop: '24px' }}>
-        <h2 style={{ fontSize: '13px', fontWeight: 700, color: C.purple, letterSpacing: '0.07em', textTransform: 'uppercase', margin: '0 0 24px' }}>
-          {EMAILS.length} {EMAILS.length === 1 ? 'email' : 'emails'}
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}>
-          {EMAILS.map((email) => <EmailCard key={email.id} email={email} />)}
-        </div>
-      </main>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px 24px 80px', display: 'grid', gridTemplateColumns: '220px 1fr', gap: '40px', alignItems: 'start' }}>
+        <Sidebar
+          categoryGroups={categoryGroups}
+          active={active}
+          onSelect={(category, stage) => setActive({ category, stage })}
+          query={query}
+          onQuery={setQuery}
+        />
+
+        <main>
+          <h2 style={{ fontSize: '13px', fontWeight: 700, color: C.purple, letterSpacing: '0.07em', textTransform: 'uppercase', margin: '0 0 20px' }}>
+            {filtered.length} {filtered.length === 1 ? 'email' : 'emails'}
+          </h2>
+
+          {filtered.length === 0 && (
+            <p style={{ color: C.body, fontSize: '14px' }}>Sin resultados para esta búsqueda.</p>
+          )}
+
+          {filteredGroups
+            ? filteredGroups.map(({ category, emails, stages }) => (
+                <div key={category} style={{ marginBottom: '44px' }}>
+                  {(filteredGroups.length > 1 || !active.category) && (
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: C.ink, margin: '0 0 16px' }}>{category}</h3>
+                  )}
+                  {stages.length > 0
+                    ? stages.map(([stage, stageEmails]) => (
+                        <div key={stage} style={{ marginBottom: '28px' }}>
+                          <h4 style={{ fontSize: '12px', fontWeight: 700, color: C.accent, letterSpacing: '0.05em', textTransform: 'uppercase', margin: '0 0 12px' }}>{stage}</h4>
+                          <EmailGrid emails={stageEmails} />
+                        </div>
+                      ))
+                    : <EmailGrid emails={emails} />}
+                </div>
+              ))
+            : <EmailGrid emails={filtered} />}
+        </main>
+      </div>
 
       <footer style={{ borderTop: `1px solid ${C.divider}`, padding: '24px', textAlign: 'center', background: C.white }}>
         <p style={{ fontSize: '11px', color: C.body, margin: 0 }}>VMC Subastas &middot; Concorde Design System</p>
