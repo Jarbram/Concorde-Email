@@ -55,26 +55,15 @@ function Sidebar({
       <button onClick={() => onSelect(null, null)} style={pillStyle(!active.category)}>
         Todos <span style={{ opacity: 0.7 }}>· {EMAILS.length}</span>
       </button>
-      {categoryGroups.map(([category, emails]) => {
-        const stages = groupBy(emails, (e) => e.stage ?? '').filter(([stage]) => stage);
-        const catActive = active.category === category;
-        return (
-          <div key={category} style={{ marginTop: '10px' }}>
-            <button onClick={() => onSelect(category, null)} style={{ ...pillStyle(catActive && !active.stage), fontWeight: 700, color: catActive && !active.stage ? '#fff' : C.ink }}>
-              {category} <span style={{ opacity: 0.6, fontWeight: 600 }}>· {emails.length}</span>
-            </button>
-            {stages.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px', paddingLeft: '12px', borderLeft: `2px solid ${C.divider}` }}>
-                {stages.map(([stage, stageEmails]) => (
-                  <button key={stage} onClick={() => onSelect(category, stage)} style={pillStyle(catActive && active.stage === stage)}>
-                    {stage} <span style={{ opacity: 0.6 }}>· {stageEmails.length}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {categoryGroups.map(([category, emails]) => (
+        <button
+          key={category}
+          onClick={() => onSelect(category, null)}
+          style={{ ...pillStyle(active.category === category), fontWeight: 700 }}
+        >
+          {category} <span style={{ opacity: 0.6, fontWeight: 600 }}>· {emails.length}</span>
+        </button>
+      ))}
     </div>
   );
 }
