@@ -38,7 +38,7 @@ function likeBadge(): string {
 
 export interface Section {
   id: string;
-  type: 'title' | 'text' | 'panel' | 'features' | 'icon-text' | 'stats' | 'cta' | 'image' | 'spacer' | 'table' | 'details' | 'divider' | 'note' | 'amount' | 'offers' | 'vehicle' | 'negotiation' | 'quote' | 'won-vehicle' | 'costs' | 'list';
+  type: 'title' | 'text' | 'panel' | 'features' | 'icon-text' | 'stats' | 'cta' | 'image' | 'spacer' | 'table' | 'details' | 'divider' | 'note' | 'amount' | 'offers' | 'vehicle' | 'negotiation' | 'quote' | 'won-vehicle' | 'costs' | 'list' | 'success' | 'columns';
   content: Record<string, string>;
 }
 
@@ -64,6 +64,8 @@ export const SECTION_LABELS: Record<Section['type'], string> = {
   'won-vehicle': 'Vehículo ganado (banner + conteo)',
   costs: 'Desglose de costos (3 cajas)',
   list: 'Lista con viñetas',
+  success: 'Confirmación con check',
+  columns: 'Dos columnas de texto',
 };
 
 export function createSection(type: Section['type']): Section {
@@ -107,6 +109,8 @@ export function createSection(type: Section['type']): Section {
     },
     costs: { l1: 'Comisión:', v1: 'US$ 0', l2: 'En garantía:', v2: 'US$ 0', l3: 'Deuda:', v3: 'US$ 0' },
     list: { title: '', i1: 'Item 1', i2: '', i3: '' },
+    success: { title: '¡Listo!', value: '', caption: '' },
+    columns: { h1: 'Columna 1', body1: 'Texto 1', h2: 'Columna 2', body2: 'Texto 2' },
   };
   return { id, type, content: { ...defaults[type] } };
 }
@@ -177,7 +181,7 @@ function renderSection(s: Section): string {
 <table border="0" cellpadding="0" cellspacing="0" width="100%">
 <tr><td width="48" valign="top"><table border="0" cellpadding="0" cellspacing="0" width="48" height="48" bgcolor="${C.purple}" style="border-radius:50%;background-image:${G_VAULT};box-shadow:${GLOSS};"><tr><td align="center" valign="middle"><span style="font-size:22px;">${esc(c.icon)}</span></td></tr></table></td>
 <td width="14"></td>
-<td valign="top"><p style="margin:0;font-size:14px;line-height:1.45;color:${C.body};font-family:${FONT_HEADING};"><b style="color:${C.purple};">${esc(c.title)}</b><br>${hl(c.text)}</p></td>
+<td valign="top"><p style="margin:0;font-size:14px;line-height:1.45;color:${C.body};font-family:${FONT_HEADING};">${c.title ? `<b style="color:${C.purple};">${esc(c.title)}</b><br>` : ''}${hl(c.text)}</p></td>
 </tr></table>${panelClose}</td></tr>`;
     case 'stats':
       return `<tr><td align="center" style="padding:0 16px;font-family:${FONT_HEADING};">${panelOpen}
@@ -344,6 +348,27 @@ ${c.img ? `<img src="${esc(c.img)}" width="100%" alt="" style="display:block;">`
 </td></tr></table></td>`;
       return `<tr><td align="center" style="padding:0 16px;font-family:${FONT_HEADING};"><table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:500px;"><tr>${box(c.l1, c.v1)}<td width="2%"></td>${box(c.l2, c.v2)}<td width="2%"></td>${box(c.l3, c.v3, true)}</tr></table></td></tr>`;
     }
+    case 'success':
+      return `<tr><td align="center" style="padding:0 16px;font-family:${FONT_HEADING};">
+<table border="0" cellpadding="0" cellspacing="0" align="center" bgcolor="${C.lavender}" style="border-radius:14px;border:1px solid ${C.border};"><tr><td align="center" style="padding:20px 26px;">
+<table border="0" cellpadding="0" cellspacing="0" width="46" height="46" bgcolor="#22c55e" style="border-radius:50%;"><tr><td align="center" valign="middle" width="46" height="46"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></td></tr></table>
+<p style="margin:10px 0 0;font-size:13px;font-weight:600;color:${C.purple};font-family:${FONT_HEADING};">${esc(c.title)}</p>
+<p style="margin:2px 0 0;font-size:26px;font-weight:800;color:${C.purple};font-family:${FONT_NUMBER};">${esc(c.value)}</p>
+<p style="margin:4px 0 0;font-size:12px;color:${C.body};font-family:${FONT_HEADING};">${esc(c.caption)}</p>
+</td></tr></table></td></tr>`;
+    case 'columns':
+      return `<tr><td align="center" style="padding:0 16px;font-family:${FONT_HEADING};">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:500px;"><tr>
+<td width="48%" valign="top" align="center" style="padding:0 6px;">
+<p style="margin:0 0 8px;font-size:12px;font-weight:800;color:${C.accent};font-family:${FONT_HEADING};">${esc(c.h1)}</p>
+<p style="margin:0;font-size:11px;line-height:1.6;color:${C.body};font-family:${FONT_HEADING};">${hl(c.body1)}</p>
+</td>
+<td width="4%"></td>
+<td width="48%" valign="top" align="center" style="padding:0 6px;">
+<p style="margin:0 0 8px;font-size:12px;font-weight:800;color:${C.accent};font-family:${FONT_HEADING};">${esc(c.h2)}</p>
+<p style="margin:0;font-size:11px;line-height:1.6;color:${C.body};font-family:${FONT_HEADING};">${hl(c.body2)}</p>
+</td>
+</tr></table></td></tr>`;
     case 'list': {
       const item = (v: string) => v ? `<tr><td width="14" valign="top" style="font-size:13px;color:${C.dark};font-family:${FONT_HEADING};">•</td><td style="font-size:13px;line-height:1.6;color:${C.dark};font-family:${FONT_HEADING};">${hl(v)}</td></tr>` : '';
       return `<tr><td style="padding:0 16px;font-family:${FONT_HEADING};">
