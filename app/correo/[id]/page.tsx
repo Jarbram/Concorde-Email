@@ -3,11 +3,11 @@
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getEmail } from '@/lib/emails';
+import { EMAILS, getEmail, CATEGORY_GRADIENT } from '@/lib/emails';
 import { generateEmail } from '@/lib/email-templates';
 
 const C = {
-  purple: '#3b1782', body: '#5a4d75', lavender: '#f5f3fe',
+  purple: '#3b1782', body: '#5a4d75', lavender: '#f5f3fe', slate: '#6b6585',
   white: '#FFFFFF', bg: '#FAFAFA', divider: '#e7e1f7',
 };
 
@@ -19,6 +19,9 @@ export default function CorreoPage({ params }: { params: Promise<{ id: string }>
   const [copied, setCopied] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const html = generateEmail(email.sections, email.subject);
+  const nextEmails = (email.leadsTo ?? [])
+    .map((nextId) => EMAILS.find((e) => e.id === nextId))
+    .filter((e): e is typeof EMAILS[number] => !!e);
 
   const copy = (text: string) => {
     navigator.clipboard.writeText(text).then(
@@ -72,6 +75,42 @@ export default function CorreoPage({ params }: { params: Promise<{ id: string }>
               }}
             />
           </div>
+
+          {email.category && (
+            <div style={{ marginTop: '20px' }}>
+              <h2 style={{ fontSize: '11px', fontWeight: 700, color: C.slate, letterSpacing: '0.06em', textTransform: 'uppercase', margin: '0 0 10px' }}>
+                {nextEmails.length > 0 ? 'Sigue en el flujo' : 'Correo final de este flujo'}
+              </h2>
+              {nextEmails.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {nextEmails.map((next) => (
+                    <Link
+                      key={next.id}
+                      href={`/correo/${next.id}`}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', borderRadius: '10px',
+                        border: `1px solid ${C.divider}`, background: '#fff', textDecoration: 'none',
+                      }}
+                    >
+                      {next.category && next.stage && (
+                        <span
+                          style={{
+                            flexShrink: 0, padding: '3px 9px', borderRadius: '9999px', fontSize: '10px', fontWeight: 700,
+                            letterSpacing: '0.04em', textTransform: 'uppercase', color: '#fff',
+                            ...(CATEGORY_GRADIENT[next.category] ? { backgroundImage: CATEGORY_GRADIENT[next.category] } : { backgroundColor: C.slate }),
+                          }}
+                        >
+                          {next.stage}
+                        </span>
+                      )}
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: C.purple }}>{next.name}</span>
+                      <span style={{ marginLeft: 'auto', color: C.slate, fontSize: '13px' }}>→</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {showCode && (
             <div style={{ marginTop: '20px', background: '#1a1a2e', borderRadius: '12px', padding: '16px' }}>

@@ -127,7 +127,10 @@ function EmailCard({ email }: { email: EmailTemplate }) {
 }
 
 export default function HomePage() {
-  const categoryGroups = useMemo(() => groupBy(EMAILS, (e) => e.category ?? 'General'), []);
+  const categoryGroups = useMemo(() => {
+    const groups = groupBy(EMAILS, (e) => e.category ?? 'General');
+    return groups.sort((a, b) => (a[0] === 'General' ? 1 : b[0] === 'General' ? -1 : 0));
+  }, []);
   const [query, setQuery] = useState('');
   const [active, setActive] = useState<{ category: string | null; stage: string | null }>({ category: null, stage: null });
 
