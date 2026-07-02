@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { EMAILS, type EmailTemplate } from '@/lib/emails';
+import { EMAILS, CATEGORY_GRADIENT, type EmailTemplate } from '@/lib/emails';
 import { generateEmail } from '@/lib/email-templates';
 
 const C = {
@@ -93,6 +93,19 @@ function EmailCard({ email }: { email: EmailTemplate }) {
       </Link>
       <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
         <div>
+          {email.category && email.stage && (
+            <span
+              style={{
+                display: 'inline-block', marginBottom: '6px', padding: '3px 9px', borderRadius: '9999px',
+                fontSize: '10px', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: '#fff',
+                ...(CATEGORY_GRADIENT[email.category]
+                  ? { backgroundImage: CATEGORY_GRADIENT[email.category] }
+                  : { backgroundColor: C.slate }),
+              }}
+            >
+              {email.category} · {email.stage}
+            </span>
+          )}
           <h3 style={{ fontSize: '15px', fontWeight: 700, color: C.ink, margin: 0 }}>{email.name}</h3>
           <p style={{ fontSize: '12px', color: C.body, margin: '4px 0 0', lineHeight: 1.45 }}>{email.desc}</p>
         </div>
