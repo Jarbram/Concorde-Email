@@ -26,6 +26,19 @@ const G_ROW_VAULT = 'linear-gradient(90deg,#19004A 0%,#3B1782 50%,#2E0F70 100%)'
 const G_TEAL_BAR = 'linear-gradient(90deg,#00edee 0%,#00d2d3 50%,#009597 100%)'; // OfferCard variant="negotiable" — concorde/components/OfferCard.tsx
 const G_LIVE = 'linear-gradient(180deg,#FF9639 0%,#EF852E 40%,#BE3D00 100%)'; // fila "1ª posición" — concorde/components/BidPosition.tsx (.pbidpos__row--live)
 const WBC_SHADOW = '0 0 8px 4px rgba(0,0,0,0.08)'; // sombra de card — concorde/components/WalletBalanceCard.tsx (.wbc)
+// bordes gradiente Concorde (capa border-box) — se emulan email-safe con tabla wrapper de padding 2px
+const B_PRIMARY = 'linear-gradient(135deg,#ffffff 0%,#fbc47d 25%,#ae8eff 75%,#ffffff 100%)';    // Button.tsx .pvbtn
+const B_NEGOTIABLE = 'linear-gradient(135deg,#ffffff 0%,#4ddcdc 25%,#6445df 75%,#ffffff 100%)'; // Button.tsx .pneg
+const B_STAT = 'linear-gradient(125deg,#ffffff 0%,#F4AC59 22%,#8460E5 74.5%,#ffffff 100%)';     // StatPill.tsx borde glass
+const TXT_SHADOW = 'rgba(0,0,0,0.25) 0 1px 3px';        // Button.tsx text-shadow
+const GLOW_PRIMARY = 'rgba(237,137,54,0.3) 0 2px 6px';  // Button.tsx .pvbtn box-shadow glow
+const GLOW_NEGOTIABLE = 'rgba(0,174,177,0.35) 0 2px 6px'; // Button.tsx .pneg box-shadow glow
+const GLASS_SHEEN = 'linear-gradient(180deg,rgba(255,255,255,0.24) 0%,rgba(255,255,255,0.12) 45%,rgba(255,255,255,0.06) 100%)'; // StatPill.tsx glass base
+const G_CONSOLE = 'linear-gradient(157deg,#5F3ED8 0%,#340091 50%,#140046 100%)';      // DetailCard.tsx .pdetail__head
+const G_CONSOLE_NAVY = 'linear-gradient(157deg,#22005c 0%,#00005E 55%,#000042 100%)'; // variante navy, mismo ángulo
+const B_GLASS_EDGE = 'linear-gradient(135deg,rgba(255,255,255,0.55) 0%,rgba(255,255,255,0.10) 45%,rgba(255,255,255,0.40) 100%)'; // canto de vidrio iluminado (::before glass de Concorde)
+const G_STRIPE = 'linear-gradient(90deg,#ed8936 0%,#8460e5 55%,#3b1782 100%)'; // franja firma orange→vault (barra inferior de OfferCard)
+const GREEN = '#32BA7C'; // verde éxito ya usado en quote/won-vehicle
 const WBC_VALUE = '#3B1782'; // label/value morado — concorde/components/WalletBalanceCard.tsx (.wbc__row-label/value)
 const PCARD_NAME = '#4c1ebc';  // OfferCard .pcard__name
 const PCARD_YEAR = '#191c1c';  // OfferCard .pcard__year
@@ -127,7 +140,7 @@ function hl(s: string): string {
 }
 
 // panel lavanda Concorde (gradiente + borde + radio) — patrones: max-width 500
-const panelOpen = `<table border="0" cellpadding="0" cellspacing="0" width="100%" align="center" bgcolor="${C.lavender}" style="border-radius:14px;border:1px solid ${C.border};background-image:${G_PANEL};max-width:500px;"><tr><td style="padding:16px 16px;">`;
+const panelOpen = `<table border="0" cellpadding="0" cellspacing="0" width="100%" align="center" bgcolor="${C.lavender}" style="border-radius:16px;border:1px solid ${C.border};background-image:${G_PANEL};max-width:500px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.6), ${WBC_SHADOW};"><tr><td style="padding:16px 16px;">`;
 const panelClose = `</td></tr></table>`;
 
 function badgeCell(iconUrl: string, white: boolean): string {
@@ -138,7 +151,7 @@ function badgeCell(iconUrl: string, white: boolean): string {
 }
 
 function chipCell(iconUrl: string): string {
-  return `<td width="32%" align="center" style="padding:0 6px;"><table border="0" cellpadding="0" cellspacing="0" width="58" height="58" align="center" bgcolor="${C.lavender}" style="border-radius:50%;border:1px solid ${C.border};"><tr><td align="center" valign="middle" width="58" height="58"><img src="${esc(iconUrl)}" width="34" height="34" alt="" border="0" style="display:block;margin:0 auto;"></td></tr></table></td>`;
+  return `<td width="32%" align="center" style="padding:0 6px;"><table border="0" cellpadding="0" cellspacing="0" width="58" height="58" align="center" bgcolor="${C.lavender}" style="border-radius:50%;border:1px solid ${C.border};box-shadow:inset 0 1px 0 rgba(255,255,255,0.6);"><tr><td align="center" valign="middle" width="58" height="58"><img src="${esc(iconUrl)}" width="34" height="34" alt="" border="0" style="display:block;margin:0 auto;"></td></tr></table></td>`;
 }
 
 const vDivider = `<table border="0" cellpadding="0" cellspacing="0" width="1" height="40" bgcolor="${C.divider}"><tr><td></td></tr></table>`;
@@ -181,7 +194,7 @@ function renderSection(s: Section): string {
 <table border="0" cellpadding="0" cellspacing="0" width="100%">
 <tr><td width="48" valign="top"><table border="0" cellpadding="0" cellspacing="0" width="48" height="48" bgcolor="${C.purple}" style="border-radius:50%;background-image:${G_VAULT};box-shadow:${GLOSS};"><tr><td align="center" valign="middle"><span style="font-size:22px;">${esc(c.icon)}</span></td></tr></table></td>
 <td width="14"></td>
-<td valign="top"><p style="margin:0;font-size:14px;line-height:1.45;color:${C.body};font-family:${FONT_HEADING};">${c.title ? `<b style="color:${C.purple};">${esc(c.title)}</b><br>` : ''}${hl(c.text)}</p></td>
+<td valign="top"><p style="margin:0;font-size:14px;line-height:1.45;color:${C.body};font-family:${FONT_HEADING};">${c.title ? `<b style="color:${C.purple};">${esc(c.title)}</b><br>` : ''}${hl(c.text).replace(/\n/g, '<br>')}</p></td>
 </tr></table>${panelClose}</td></tr>`;
     case 'stats':
       return `<tr><td align="center" style="padding:0 16px;font-family:${FONT_HEADING};">${panelOpen}
@@ -194,8 +207,12 @@ function renderSection(s: Section): string {
 <td width="32%" align="center"><span style="display:block;font-size:20px;font-weight:800;color:${C.purple};font-family:${FONT_NUMBER};">${esc(c.s3v)}</span><span style="font-size:10px;color:${C.body};text-transform:uppercase;">${esc(c.s3l)}</span></td>
 </tr></table>${panelClose}</td></tr>`;
     case 'cta': {
-      const gradient = c.variant === 'negotiable' ? G_NEGOTIABLE : G_PRIMARY;
-      return `<tr><td align="center"><a href="${esc(c.url)}" target="_blank" style="display:inline-block;background:${C.purple};background-image:${gradient};color:${C.white};border-radius:9999px;padding:13px 44px;font-family:${FONT_HEADING};font-size:15px;font-weight:700;text-decoration:none;box-shadow:inset 0 1px 0 rgba(255,255,255,0.30);">${esc(c.text)}</a></td></tr>`;
+      const neg = c.variant === 'negotiable';
+      const gradient = neg ? G_NEGOTIABLE : G_PRIMARY;
+      const border = neg ? B_NEGOTIABLE : B_PRIMARY;
+      const glow = neg ? GLOW_NEGOTIABLE : GLOW_PRIMARY;
+      // borde gradiente de Button.tsx emulado con tabla wrapper (padding 2px = border-width)
+      return `<tr><td align="center"><table border="0" cellpadding="0" cellspacing="0" align="center" style="border-radius:9999px;background-image:${border};box-shadow:${glow};"><tr><td style="padding:2px;"><a href="${esc(c.url)}" target="_blank" style="display:inline-block;background:${C.purple};background-image:${gradient};color:${C.white};border-radius:9999px;padding:13px 44px;font-family:${FONT_HEADING};font-size:15px;font-weight:700;text-decoration:none;text-shadow:${TXT_SHADOW};box-shadow:inset 0 1px 0 rgba(255,255,255,0.30);">${esc(c.text)}</a></td></tr></table></td></tr>`;
     }
     case 'image':
       return `<tr><td align="center" style="padding:0 16px;"><img src="${esc(c.url)}" alt="${esc(c.alt)}" style="display:block;margin:0 auto;max-width:100%;height:auto;border-radius:12px;"></td></tr>`;
@@ -218,18 +235,20 @@ function renderSection(s: Section): string {
       return `<tr><td align="center" style="padding:0 16px;"><table border="0" cellpadding="0" cellspacing="0" width="100%" align="center" style="max-width:500px;"><tr><td style="border-top:1px solid ${C.border};font-size:1px;line-height:1px;height:1px;">&nbsp;</td></tr></table></td></tr>`;
     case 'note':
       return `<tr><td align="center" style="padding:0 16px;font-family:${FONT_HEADING};">
-<table border="0" cellpadding="0" cellspacing="0" width="100%" align="center" bgcolor="#FFFFFF" style="max-width:500px;border:1px solid ${C.border};border-radius:12px;"><tr><td style="padding:14px 14px;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" align="center" bgcolor="#FFFFFF" style="max-width:500px;border:1px solid ${C.border};border-radius:12px;box-shadow:${WBC_SHADOW};"><tr><td style="padding:14px 14px;">
 <table border="0" cellpadding="0" cellspacing="0" width="100%"><tr>
 <td width="32" valign="top"><table border="0" cellpadding="0" cellspacing="0" width="30" height="30" bgcolor="#fff0e2" style="border-radius:8px;"><tr><td align="center" valign="middle" width="30" height="30" style="font-size:17px;font-weight:800;color:${C.accent};font-family:${FONT_HEADING};line-height:1;">!</td></tr></table></td>
 <td width="10"></td>
 <td valign="middle"><p style="margin:0;font-size:13px;line-height:1.5;color:${C.body};font-family:${FONT_HEADING};">${c.title ? `<b style="color:${C.purple};">${esc(c.title)}</b> ` : ''}${hl(c.body)}</p></td>
 </tr></table></td></tr></table></td></tr>`;
     case 'amount':
+      // borde gradiente de StatPill.tsx emulado con tabla wrapper (padding 1.5px ≈ 2px)
       return `<tr><td align="center" style="padding:0 16px;font-family:${FONT_HEADING};">
-<table border="0" cellpadding="0" cellspacing="0" align="center" bgcolor="${C.lavender}" style="border-radius:14px;border:1px solid ${C.border};"><tr><td align="center" style="padding:14px 26px;">
+<table border="0" cellpadding="0" cellspacing="0" align="center" style="border-radius:16px;background-image:${B_STAT};box-shadow:${WBC_SHADOW};"><tr><td style="padding:2px;">
+<table border="0" cellpadding="0" cellspacing="0" align="center" bgcolor="${C.lavender}" style="border-radius:14px;background-image:${G_PANEL};"><tr><td align="center" style="padding:14px 26px;">
 <p style="margin:0 0 4px;font-size:12px;color:${C.body};font-family:${FONT_HEADING};">${esc(c.label)}</p>
 <p style="margin:0;font-size:24px;font-weight:800;color:${C.purple};font-family:${FONT_NUMBER};">${esc(c.value)}</p>
-</td></tr></table></td></tr>`;
+</td></tr></table></td></tr></table></td></tr>`;
     case 'offers': {
       const card = (img: string, name: string, year: string) => `<td width="24%" valign="top"><table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-radius:8px;box-shadow:0 0 16px 4px rgba(0,0,0,0.07);">
 <tr><td>${img ? `<img src="${esc(img)}" width="100%" alt="" style="display:block;height:70px;object-fit:cover;border-radius:8px 8px 0 0;">` : `<div style="height:70px;background:${C.lavender};border-radius:8px 8px 0 0;"></div>`}</td></tr>
@@ -351,7 +370,7 @@ ${c.img ? `<img src="${esc(c.img)}" width="100%" alt="" style="display:block;">`
     case 'success':
       return `<tr><td align="center" style="padding:0 16px;font-family:${FONT_HEADING};">
 <table border="0" cellpadding="0" cellspacing="0" align="center" bgcolor="${C.lavender}" style="border-radius:14px;border:1px solid ${C.border};"><tr><td align="center" style="padding:20px 26px;">
-<table border="0" cellpadding="0" cellspacing="0" width="46" height="46" bgcolor="#22c55e" style="border-radius:50%;"><tr><td align="center" valign="middle" width="46" height="46"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></td></tr></table>
+<table border="0" cellpadding="0" cellspacing="0" width="46" height="46" bgcolor="${GREEN}" style="border-radius:50%;box-shadow:${GLOSS};"><tr><td align="center" valign="middle" width="46" height="46"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></td></tr></table>
 <p style="margin:10px 0 0;font-size:13px;font-weight:600;color:${C.purple};font-family:${FONT_HEADING};">${esc(c.title)}</p>
 <p style="margin:2px 0 0;font-size:26px;font-weight:800;color:${C.purple};font-family:${FONT_NUMBER};">${esc(c.value)}</p>
 <p style="margin:4px 0 0;font-size:12px;color:${C.body};font-family:${FONT_HEADING};">${esc(c.caption)}</p>
@@ -380,37 +399,55 @@ ${c.title ? `<p style="margin:0 0 6px;font-size:13px;font-weight:700;color:${C.p
   }
 }
 
-// ─── Header glass (gradiente vault + panel translúcido, fallback bgcolor) ───
+// ─── Header glass (gradiente consola DetailCard + panel con canto de vidrio) ───
 function glassHeader(): string {
-  return `<tr><td align="center" valign="middle" bgcolor="${C.purple}" style="background-color:${C.purple};background-image:linear-gradient(135deg,#8460e5 0%,#3b1782 52%,#22005c 100%);padding:32px 24px;">
-<table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td align="center" valign="middle" style="border-radius:18px;border:1px solid rgba(255,255,255,0.24);background-color:rgba(255,255,255,0.10);box-shadow:inset 0 1px 0 rgba(255,255,255,0.30), inset 0 -1px 0 rgba(0,0,0,0.10);padding:24px 22px;">
+  return `<tr><td align="center" valign="middle" bgcolor="${C.purple}" style="background-color:${C.purple};background-image:${G_CONSOLE};padding:30px 24px 26px;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-radius:20px;background-image:${B_GLASS_EDGE};"><tr><td style="padding:1px;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td align="center" valign="middle" style="border-radius:19px;background-color:rgba(255,255,255,0.10);background-image:${GLASS_SHEEN};box-shadow:inset 0 1px 0 rgba(255,255,255,0.30), inset 0 -1px 0 rgba(0,0,0,0.10);padding:26px 22px;">
 <img src="https://cdn.vmcsubastas.com/services/mailing/images/vmcsubastas-mail-header.png" style="display:block;margin:0 auto;max-width:100%;height:auto;" alt="VMC Subastas">
-</td></tr></table></td></tr>`;
+</td></tr></table>
+</td></tr></table></td></tr>
+<tr><td height="4" bgcolor="#ed8936" style="background-image:${G_STRIPE};font-size:1px;line-height:1px;">&nbsp;</td></tr>`;
 }
 
 // ─── Pre-footer glass + footer completo (layout original) ───────────────────
 function glassFooter(): string {
-  return `<tr><td align="center" width="600">
-<table border="0" width="600" cellspacing="0" cellpadding="0" align="center"><tr>
-<td width="300" height="223" align="center" valign="middle" bgcolor="${C.purple}" style="background-color:${C.purple};background-image:linear-gradient(135deg,#8460e5 0%,#3b1782 52%,#22005c 100%);padding:18px;">
-<table border="0" cellpadding="0" cellspacing="0" width="100%" height="187"><tr><td align="center" valign="middle" height="187" style="border-radius:18px;border:1px solid rgba(255,255,255,0.24);background-color:rgba(255,255,255,0.10);box-shadow:inset 0 1px 0 rgba(255,255,255,0.30);padding:18px 16px;">
-<table border="0" width="100%" cellspacing="0" cellpadding="0" align="center">
-<tr><td align="center" style="font-family:${FONT_HEADING};font-size:22px;font-weight:800;letter-spacing:-0.01em;line-height:1.2;color:#FFFFFF;">VMC Subastas</td></tr>
-<tr><td height="6"></td></tr>
-<tr><td align="center" style="font-family:${FONT_HEADING};font-size:14px;font-weight:500;line-height:1.4;color:#d8d2ec;">¡Despierta al cazador de ofertas que hay en ti!</td></tr>
-<tr><td height="14"></td></tr>
-<tr><td align="center"><img src="https://cdn.vmcsubastas.com/services/mailing/inhabilitacion-cuenta/con-todo-footer.png" width="200" height="74" alt="VMC Subastas" style="border:0;display:block;margin:0 auto;max-width:100%;height:auto;"></td></tr>
-</table></td></tr></table></td>
-<td width="300" height="223" bgcolor="${C.navy}" style="background-color:${C.navy};background-image:linear-gradient(135deg,#22005c 0%,#00005E 62%,#000042 100%);padding:18px;">
-<table border="0" cellpadding="0" cellspacing="0" width="100%" height="187"><tr><td align="center" valign="middle" height="187" style="border-radius:18px;border:1px solid rgba(255,255,255,0.24);background-color:rgba(255,255,255,0.10);box-shadow:inset 0 1px 0 rgba(255,255,255,0.30);padding:18px 16px;">
-<table border="0" width="100%" cellspacing="0" cellpadding="0" align="center">
-<tr><td align="center" style="font-family:${FONT_HEADING};font-size:22px;font-weight:800;letter-spacing:-0.01em;line-height:1.25;color:#FFFFFF;">¿Quieres saber más?</td></tr>
-<tr><td height="8"></td></tr>
-<tr><td align="center" style="font-family:${FONT_HEADING};font-size:13px;font-weight:500;line-height:1.45;color:#d8d2ec;">¡Visita nuestro <b style="color:#FFFFFF;">Centro de Ayuda!</b></td></tr>
-<tr><td height="18"></td></tr>
-<tr><td align="center"><a href="https://ayuda.vmcsubastas.com/es/collections/3079940-centro-de-ayuda-comprador" target="_blank" style="text-decoration:none;"><table border="0" width="160" cellspacing="0" cellpadding="0" align="center"><tr><td width="160" height="42" bgcolor="#3b1782" style="border-radius:9999px;background-image:${G_PRIMARY};box-shadow:inset 0 1px 0 rgba(255,255,255,0.30);font-family:${FONT_HEADING};font-size:14px;font-weight:700;color:#FFFFFF;" align="center" valign="middle"><b>¡Vamos!</b></td></tr></table></a></td></tr>
-</table></td></tr></table></td>
-</tr></table></td></tr>
+  const miniRule = (align: string) => `<table border="0" cellpadding="0" cellspacing="0" width="36" align="${align}" style="border-radius:2px;background-image:${G_STRIPE};"><tr><td height="3" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></table>`;
+  const vamosBtn = `<a href="https://ayuda.vmcsubastas.com/es/collections/3079940-centro-de-ayuda-comprador" target="_blank" style="text-decoration:none;"><table border="0" cellspacing="0" cellpadding="0" align="right" style="border-radius:9999px;background-image:${B_PRIMARY};box-shadow:${GLOW_PRIMARY};"><tr><td style="padding:2px;"><table border="0" width="140" cellspacing="0" cellpadding="0"><tr><td width="140" height="38" bgcolor="#3b1782" style="border-radius:9999px;background-image:${G_PRIMARY};box-shadow:inset 0 1px 0 rgba(255,255,255,0.30);font-family:${FONT_HEADING};font-size:14px;font-weight:700;color:#FFFFFF;text-shadow:${TXT_SHADOW};" align="center" valign="middle"><b>¡Vamos!</b></td></tr></table></td></tr></table></a>`;
+  // consola única compacta (DetailCard): un solo card glass, marca | imagen arriba,
+  // hairline interno (.pdetail__hline) y fila de acción con CTA abajo
+  return `<tr><td height="4" bgcolor="#ed8936" style="background-image:${G_STRIPE};font-size:1px;line-height:1px;">&nbsp;</td></tr>
+<tr><td align="center" width="600" bgcolor="${C.purple}" style="background-color:${C.purple};background-image:${G_CONSOLE};padding:16px 20px;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-radius:18px;background-image:${B_GLASS_EDGE};"><tr><td style="padding:1px;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td style="border-radius:17px;background-color:rgba(255,255,255,0.10);background-image:${GLASS_SHEEN};box-shadow:inset 0 1px 0 rgba(255,255,255,0.30);padding:16px 20px;">
+<table border="0" width="100%" cellspacing="0" cellpadding="0"><tr>
+<td valign="middle">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr><td align="left" style="font-family:${FONT_HEADING};font-size:20px;font-weight:800;letter-spacing:-0.01em;line-height:1.2;color:#FFFFFF;">VMC Subastas</td></tr>
+<tr><td height="8" align="left" valign="bottom">${miniRule('left')}</td></tr>
+<tr><td height="5"></td></tr>
+<tr><td align="left" style="font-family:${FONT_HEADING};font-size:13px;font-weight:500;line-height:1.4;color:#d8d2ec;">¡Despierta al cazador de ofertas que hay en ti!</td></tr>
+</table>
+</td>
+<td width="16"></td>
+<td width="160" valign="middle" align="right"><img src="https://cdn.vmcsubastas.com/services/mailing/inhabilitacion-cuenta/con-todo-footer.png" width="160" height="59" alt="VMC Subastas" style="border:0;display:block;max-width:100%;height:auto;"></td>
+</tr></table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr><td height="12"></td></tr>
+<tr><td height="1" style="background-color:rgba(255,255,255,0.28);font-size:1px;line-height:1px;">&nbsp;</td></tr>
+<tr><td height="12"></td></tr>
+</table>
+<table border="0" width="100%" cellspacing="0" cellpadding="0"><tr>
+<td valign="middle">
+<span style="display:block;font-family:${FONT_HEADING};font-size:15px;font-weight:800;letter-spacing:-0.01em;line-height:1.3;color:#FFFFFF;">¿Quieres saber más?</span>
+<span style="display:block;margin-top:2px;font-family:${FONT_HEADING};font-size:12px;font-weight:500;line-height:1.4;color:#d8d2ec;">¡Visita nuestro <b style="color:#FFFFFF;">Centro de Ayuda!</b></span>
+</td>
+<td width="14"></td>
+<td width="146" valign="middle" align="right">${vamosBtn}</td>
+</tr></table>
+</td></tr></table>
+</td></tr></table>
+</td></tr>
 <tr bgcolor="#FFFFFF"><td align="center" width="600">
 <table border="0" cellpadding="0" cellspacing="0" width="600" align="center"><tr><td width="28"></td><td>
 <table border="0" cellpadding="0" cellspacing="0" width="100%" align="center">
