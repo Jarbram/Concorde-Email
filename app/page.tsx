@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { EMAILS, CATEGORY_GRADIENT, type EmailTemplate } from '@/lib/emails';
+import { EMAILS, CATEGORY_GRADIENT, STAGE_ORDER, type EmailTemplate } from '@/lib/emails';
 import { generateEmail } from '@/lib/email-templates';
+import { FlowDiagram } from './HomeFlowDiagram';
 
 const C = {
   ink: '#14122b', purple: '#3b1782', body: '#5a4d75', slate: '#6b6585',
@@ -150,6 +151,8 @@ export default function HomePage() {
     }).filter((g) => g.emails.length > 0);
   }, [filtered, categoryGroups, active, query]);
 
+  const showDiagram = !!active.category && !!STAGE_ORDER[active.category] && !query.trim();
+
   return (
     <div style={{ minHeight: '100vh', background: C.bg, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <header style={{ padding: '56px 24px 40px', textAlign: 'center', borderBottom: `1px solid ${C.divider}` }}>
@@ -182,27 +185,40 @@ export default function HomePage() {
             {filtered.length} {filtered.length === 1 ? 'email' : 'emails'}
           </h2>
 
+          {showDiagram && (
+            <FlowDiagram
+              category={active.category!}
+              emails={EMAILS.filter((e) => (e.category ?? 'General') === active.category)}
+              activeStage={active.stage}
+              onSelectStage={(stage) => setActive({ category: active.category, stage })}
+            />
+          )}
+
           {filtered.length === 0 && (
             <p style={{ color: C.body, fontSize: '14px' }}>Sin resultados para esta búsqueda.</p>
           )}
 
-          {filteredGroups
-            ? filteredGroups.map(({ category, emails, stages }) => (
-                <div key={category} style={{ marginBottom: '44px' }}>
-                  {(filteredGroups.length > 1 || !active.category) && (
-                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: C.ink, margin: '0 0 16px' }}>{category}</h3>
-                  )}
-                  {stages.length > 0
-                    ? stages.map(([stage, stageEmails]) => (
-                        <div key={stage} style={{ marginBottom: '28px' }}>
-                          <h4 style={{ fontSize: '12px', fontWeight: 700, color: C.accent, letterSpacing: '0.05em', textTransform: 'uppercase', margin: '0 0 12px' }}>{stage}</h4>
-                          <EmailGrid emails={stageEmails} />
-                        </div>
-                      ))
-                    : <EmailGrid emails={emails} />}
-                </div>
-              ))
-            : <EmailGrid emails={filtered} />}
+          {showDiagram ? (
+            <EmailGrid emails={filtered} />
+          ) : filteredGroups ? (
+            filteredGroups.map(({ category, emails, stages }) => (
+              <div key={category} style={{ marginBottom: '44px' }}>
+                {(filteredGroups.length > 1 || !active.category) && (
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: C.ink, margin: '0 0 16px' }}>{category}</h3>
+                )}
+                {stages.length > 0
+                  ? stages.map(([stage, stageEmails]) => (
+                      <div key={stage} style={{ marginBottom: '28px' }}>
+                        <h4 style={{ fontSize: '12px', fontWeight: 700, color: C.accent, letterSpacing: '0.05em', textTransform: 'uppercase', margin: '0 0 12px' }}>{stage}</h4>
+                        <EmailGrid emails={stageEmails} />
+                      </div>
+                    ))
+                  : <EmailGrid emails={emails} />}
+              </div>
+            ))
+          ) : (
+            <EmailGrid emails={filtered} />
+          )}
         </main>
       </div>
 
